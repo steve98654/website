@@ -1,0 +1,379 @@
+" This vimrc file mostly just enables lots of good vim features like syntax
+" hilighting, the mouse, and so forth.  However, it also defines a few hotkeys
+" and commands which are listed below for reference (a few of them aren't
+" actually defined here but are from plugins in the .vim folder):
+"
+"   F4 - Show the syntax group under the cursor.
+"   F5 - Open/Close directory browser
+"   F8 - Run make (Note that by default it builds with 6 cores via -j6)
+"   F9 - Open/Close a window that shows changes in the file with respect
+"        to what is in source control like svn,mercurial,etc.
+"
+"        See :help vimdiff for documentation about the diff window.  But the
+"        main commands are do (for diff obtain) and dp (for diff put).  These
+"        dommands let you transfer blocks of text from one window to the
+"        other (the left side is your current file while the right side is
+"        what is in source control)
+"
+"   F10 and F11 - Both of these bring up the :cwindow which shows compiler
+"        errors.
+"
+"   F12 - Open/Close the project pane on the left.  See :help project for
+"         details on how to use this plugin.
+"
+"   CTRL+h, CTRL+j, CTRL+k, or CTRL+l - Move the cursor from one vim split
+"         screen to another.  
+"
+"   :A  - This command will try and jump you between a header file and its
+"         corresponding source file.
+"       
+"   \be - This brings up the buffer explorer.  q closes the explorer or you
+"         can use it to view a file you recently opened.
+"   ,v  - open your vimrc file
+"   ,V  - Reload your vimrc file
+"   \d  - Paste the following comment into your source file:
+"         // ----------------------------------------------------------------------------------
+"   \c  - When in a java source file this will paste the following:
+"         System.out.println(
+"   \t  - Open a new tab.  This is the same as :tabnew
+"
+
+" Vundle related functionality
+set nocompatible
+filetype off
+
+"set rtp+=~/.vim/bundle/Vundle.vim/
+"call vundle#begin()
+
+"Plugin 'VundleVim/Vundle.vim'
+"Plugin 'davidhalter/jedi-vim'
+
+filetype plugin indent on
+
+set tags+=~/source/tags
+set path+=~/source
+
+"call vundle#end()
+"filetype plugin indent on
+
+" Setup color options based on the supported color modes
+" of the current terminal.
+if has("win32")
+    colorscheme torte
+    set guifont=Courier:h10:cANSI
+else
+    if &term =~ "linux"
+        if has("terminfo")
+            set t_Co=8
+            set t_Sf=[3%p1%dm
+            set t_Sb=[4%p1%dm
+        else
+            set t_Co=8
+            set t_Sf=[3%dm
+            set t_Sb=[4%dm
+        endif
+        colorscheme torte
+    elseif &term =~ "xterm" 
+        set term=xterm-color
+        set t_Co=16
+        colorscheme torte
+    elseif &term =~ "screen" 
+        set t_Co=16
+        colorscheme torte
+    endif
+endif
+
+autocmd!
+set nomodeline
+
+set fileformat=unix
+set fileformats=unix,dos
+set encoding=utf-8 spelllang=en
+autocmd FileType c,cpp,java,python,matlab,cs,k,q set textwidth=91
+
+" remap CTRL-B to CTRL-X CTRL-O 
+autocmd FileType java,cpp,c,python,cs inoremap <C-B> <C-X><C-O>
+
+set nocp " Don't use vi compatability mode.
+
+filetype indent plugin on
+
+syntax on
+set mouse=a
+set autoindent ruler
+
+" set the spell check color options to something sane.
+hi SpellBad ctermbg=1 ctermfg=15
+hi SpellCap ctermbg=11
+
+" hilight search terms
+set hlsearch
+
+" Indentation rules
+autocmd FileType html,xsd,xml,xslt,c,cpp,java,sh,matlab,python,cs set cin nu cino=t0,c4,C1,(1s,l1,W4,m1,g0 
+autocmd FileType conf set cin cino=+0,#0 cinkeys-=0#
+autocmd FileType conf,c,cpp,python,java,sh,lout,tex,matlab,vim,cs set sw=4 ts=4 expandtab sr
+autocmd FileType html,xsd,xml,xslt set sw=3 ts=3 expandtab sr
+autocmd FileType conf,html,xsd,xml,xslt,c,cpp,python,java,sh,matlab,cs set formatoptions-=ro
+autocmd FileType conf,html,xsd,xml,xslt,c,cpp,python,java,sh,matlab,cs set formatoptions+=n
+autocmd FileType c,cpp,python,java,sh,matlab,cs set complete=.,w,b,u,t,i
+autocmd FileType c,cpp set indentexpr=GetMyCppIndent() 
+autocmd FileType java set indentexpr=GetMyJavaIndent() 
+autocmd FileType html,xsd,xml,xslt set indentexpr=GetMyXmlIndent() 
+autocmd FileType conf,lout,tex set ai 
+autocmd FileType c,cpp,java,cs set spellcapcheck=[.?]\\_[\\])'\"\t\ ]\\+
+autocmd FileType c,cpp,cs set indentkeys=0{,0},:,0#,!^F,o,O,e,0>,/,0),0-,0=requires,0=ensures,0=throws,0=-\ else
+autocmd FileType java set indentkeys=0{,0},:,0#,!^F,o,O,e,>,/,0),0-,0=requires,0=ensures,0=throws,0=-\ else,0=\<li\>
+autocmd FileType html,xsd,xml,xslt set indentkeys=!^F,o,O,e,>
+
+" turn on spell checking for XML type files
+autocmd FileType html,xsd,xml,xslt syntax spell toplevel
+autocmd FileType html,xsd,xml,xslt,text setlocal spell
+autocmd Filetype help setlocal nospell
+
+" turn on spell checking for these type files
+autocmd FileType c,cpp,python,java,matlab,sh,svn,tex,cs setlocal spell
+autocmd BufNewFile,BufRead *.txt setlocal spell
+
+" Ignore CamelCase words when spell checking source code.
+fun! IgnoreCamelCaseSpell()
+    syn match CamelCase /\<[A-Z][a-z]\+[A-Z].\{-}\>/ contains=@NoSpell transparent
+    syn cluster Spell add=CamelCase
+    syn match CamelCase2 /\<[a-z]\+[A-Z]\+[a-z]\+.\{-}\>/ contains=@NoSpell transparent
+    syn cluster Spell add=CamelCase2
+endfun
+autocmd BufRead,BufNewFile,FileType c,cpp,java,python :call IgnoreCamelCaseSpell()
+
+" Key Mappings 
+
+",v brings up my .vimrc
+",V reloads it -- making all changes active (have to save first)
+map ,v :sp ~/.vimrc<CR><C-W>
+
+imap jj <Esc>
+
+map <silent> ,V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimrc reloaded'"<CR>
+
+" Pass to a MATLAB, k, and q indentation files.
+autocmd FileType matlab runtime! indent/matlab.vim 
+autocmd FileType q runtime! indent/q.vim 
+autocmd FileType k runtime! indent/k.vim 
+
+"autocmd FileType python set omnifunc=pythoncomplete#Complete  Use Jedi here
+" instead 
+autocmd FileType c set omnifunc=ccomplete#Complete
+autocmd FileType cpp set omnifunc=cppomnicomplete#Complete
+autocmd FileType html,xsd,xml,xslt set omnifunc=xmlcomplete#CompleteTags
+
+let g:proj_flags = "gimstS" 
+map <silent> <F11> <ESC>:Tlist<CR>
+map <F4> :echo synIDattr(synID(line("."), col("."), 1), "name")<CR>
+imap <silent> <F12> <ESC><Plug>ToggleProject
+imap <silent> <F10> <ESC>:cwindow<CR>
+map <silent> <F10> <ESC>:cwindow<CR>
+imap <silent> <F11> <ESC>:cwindow<CR>
+map <silent> <F11> <ESC>:cwindow<CR>
+map <silent> <F9> <ESC>:call Toggle_diff()<CR>
+imap <silent> <F9> <ESC>:call Toggle_diff()<CR>
+map <silent> <F5> <ESC>:NERDTreeToggle<CR>
+imap <silent> <F5> <ESC>:NERDTreeToggle<CR>
+
+autocmd FileType tex,c,cpp,lout map <silent> <F8> <ESC>:wa!<CR>:make -j4<CR>
+autocmd FileType tex,c,cpp,lout imap <silent> <F8> <ESC>:wa!<CR>:make -j4<CR>
+" set these back to default
+autocmd FileType tex,c,cpp,lout set makeprg&
+autocmd FileType tex,c,cpp,lout set efm&
+
+" Run the current python script instead of compiling it since python doesn't
+" check many errors until runtime.
+autocmd FileType python set makeprg=python\ %
+autocmd FileType python set efm=%E\ %#File\ \"%f\"\\,\ line\ %l%.%#,%Z%m
+autocmd FileType python map <silent> <F8> <ESC>:wa!<CR>:make<CR>
+autocmd FileType python imap <silent> <F8> <ESC>:wa!<CR>:make<CR>
+
+"" My additions
+
+autocmd FileType cs map <silent> <F8> <ESC>:wa!<CR>:!gmcs -out:tfle.exe % && ./tfle.exe<CR>
+autocmd FileType cs imap <silent> <F8> <ESC>:wa!<CR>:!gmcs -out:tfle.exe % && ./tfle.exe<CR>
+
+set lines=100 
+set columns=100
+
+"" pydiction -- python tab completion
+
+let g:pydiction_location = '~/.vim/ftplugin/pydiction/complete-dict'
+let g:pydiction_menu_height = 20
+
+"" Add Line numbering 
+set nu
+
+"" Wrap around line ends 
+set whichwrap=<,>,h,l,[,]
+
+map <C-C> "py
+"map <C-V> "pp
+map <C-S> :wmap <C-space> <Esc>
+
+" Open Taglist 
+nnoremap <silent> <F7> :TlistToggle<CR>
+
+"Remap movement keys
+
+noremap ; l
+noremap l h
+noremap k j
+noremap j k
+
+imap ê <Left>
+imap <A-;> <Right>
+imap ì <Up>
+imap ë <Down>
+
+inoremap <C-Z> <Esc> :U
+set clipboard=unnamedplus
+
+" F IX THESE MAPPINGS 
+" MAKE SEPARATE COPY PASTE COMMANDS INTERNALLY AND TO CLIPBOARD
+
+map <C-n> "+y
+map <C-m> "+p
+
+vmap <C-c> "py
+nmap <C-c> "pyiw
+
+" Uncomment this to force ctrl-V to be a paste command
+"vmap <C-v> "pp
+"nmap <C-v> "pP
+"imap <C-v> <Esc>"ppa
+
+nmap <S-Up> V
+nmap <S-Down> V
+
+set guioptions -=m
+set guioptions -=T
+set guioptions -=r
+
+"set term=builtin_ansi       " Make arrow and other keys work
+
+"if !exists("autocommands_loaded")
+"    let autocommands_loaded = 1
+"    autocmd BufRead,BufNewFile,FileReadPost *.py source ~/.vim/python
+"endif
+
+" Remember last line in previous file edit
+"au BufReadPost * if line ("'\"") > 0|if line ("'\"") <= 
+"   \line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
+
+" *********************************************************************************************
+" Indenting Functions
+" *********************************************************************************************
+
+" This funtion assumes that it is called only for lines that  
+" are actually in a comment.   It returns the line number containing 
+" the start of the comment.
+function! FindCommentStart(line)
+   let lnum = a:line
+   while getline(lnum) !~ '/\*' && lnum > 1
+       let lnum = lnum - 1
+   endwhile
+   return lnum
+endfunction
+
+" returns 1 if this line is part of a /* */ style comment, 0 otherwise
+function! InJavaComment(line)
+    let lnum = a:line
+    if getline(lnum) =~ '^\s*/\*' || getline(lnum) =~ '^\s*\*/' 
+       return 1
+    endif
+
+    " if this is a // style comment then return 0
+    if getline(lnum) =~ '^\s*//'
+       return 0
+    endif
+
+    let id = synIDattr(synID(lnum,1,0),"name")
+    if synIDtrans(synID(lnum,1,0)) == hlID("Comment") || id =~ "javaCommentTitle" || id =~ "javaDocComment" || id =~ "javaDocTags" 
+        return 1 
+    else
+        return 0 
+    endif
+endfunction
+   
+" returns 1 if this line is part of a /* */ style comment, 0 otherwise
+function! InCppComment(line)
+    let lnum = a:line
+    if getline(lnum) =~ '^\s*/\*' || getline(lnum) =~ '^\s*\*/' 
+       return 1
+    endif
+
+    " if this is a // style comment then return 0
+    if getline(lnum) =~ '^\s*//'
+       return 0
+    endif
+
+    if synIDtrans(synID(lnum,1,0)) == hlID("Comment") 
+        return 1 
+    else
+        return 0 
+    endif
+endfunction
+   
+" returns the number of leading spaces on the given line
+function! CountLeadingSpaces(line)
+    return strlen(matchstr(getline(a:line),'^\s*'))
+endfunction
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Python select lines in visual mode and execute function 
+"
+" Execute currently selected visual range as Python.  Lines are pre-processed
+" to remove extra indentation, leaders, or decorators that might be in place
+" due to the line range being part of a code block in a markup-language
+" document (such as ReStructured Text, Markdown, etc.)
+" Usage: Select a range of line in the buffer and then call ':EvalPy' to
+" execute those lines in the default system Python and show the results in the
+" command window. Using the 'bang' operator (':EvalPy!') will execute the
+" lines and insert the results in the current buffer.
+function! <SID>EvaluateCurrentRangeAsMarkedUpPython(insert_results) range
+    "" get lines
+    let [lnum1, col1] = getpos("'<")[1:2]
+    let [lnum2, col2] = getpos("'>")[1:2]
+    let lines = getline(lnum1, lnum2)
+    " let lines[-1] = lines[-1][: col2 - 2]
+    " let lines[0] = lines[0][col1 - 1:]
+ 
+    "" remove blank rows
+    let rows = []
+    for line in lines
+        let row = substitute(line, '^\s*\(.\{-}\)\s*$', '\1', '')
+        if len(row) > 0
+            call add(rows, line)
+        endif
+    endfor
+    let lines = rows
+ 
+    if len(lines) == 0
+        return
+    endif
+    let leader = matchstr(lines[0], '^\s*\(>>>\|\.\.\.\)\{0,1}\s*')
+    let leader_len = len(leader)
+    let code_lines = []
+    for line in lines
+        let code_line = strpart(line, leader_len)
+        call add(code_lines, code_line)
+    endfor
+    let code = join(code_lines, "\n")
+    if empty(a:insert_results)
+        redir => result
+        silent execute "!python -c " . shellescape(code)
+        redir END
+        let rows = split(result, '\n')[1:]
+        let result = join(rows, "\n")
+        echo result
+    else
+        let endpos = getpos("'>")
+        call setpos('.', endpos)
+        execute "r !python -c " . shellescape(code)
+    endif
+endfunction
+command! -bang -range EvalPy :call s:EvaluateCurrentRangeAsMarkedUpPython("<bang>")
